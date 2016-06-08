@@ -1,0 +1,7 @@
+*.o
+*.a
+*.lrho
+*.lrhs
+*.lrh
+test/test-mempool
+test/test-random-model
