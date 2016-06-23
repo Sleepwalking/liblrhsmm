@@ -27,7 +27,7 @@
 
 #include "inference-helper.h"
 
-static FP_TYPE lrh_gmm_mixprob_lg(lrh_gmm* src, FP_TYPE* observ, int k) {
+FP_TYPE lrh_gmm_mixprob_lg(lrh_gmm* src, FP_TYPE* observ, int k) {
   FP_TYPE ex = 0;
   //FP_TYPE mul = 0;
   FP_TYPE *mean, *var;
@@ -41,11 +41,11 @@ static FP_TYPE lrh_gmm_mixprob_lg(lrh_gmm* src, FP_TYPE* observ, int k) {
   return isnan(ret) ? -999 : ret;
 }
 
-static double lrh_gmm_mixprob(lrh_gmm* src, FP_TYPE* observ, int k) {
+double lrh_gmm_mixprob(lrh_gmm* src, FP_TYPE* observ, int k) {
   return fastexp(lrh_gmm_mixprob_lg(src, observ, k));
 }
 
-static FP_TYPE lrh_gmm_outputprob_lg(lrh_gmm* src, FP_TYPE* observ) {
+FP_TYPE lrh_gmm_outputprob_lg(lrh_gmm* src, FP_TYPE* observ) {
   if(src -> nmix == 1) { // single mixture case
     return lrh_gmm_mixprob_lg(src, observ, 0);
   } else { // multi-mixture case
@@ -57,17 +57,17 @@ static FP_TYPE lrh_gmm_outputprob_lg(lrh_gmm* src, FP_TYPE* observ) {
   }
 }
 
-static double lrh_gmm_outputprob(lrh_gmm* src, FP_TYPE* observ) {
+double lrh_gmm_outputprob(lrh_gmm* src, FP_TYPE* observ) {
   return fastexp(lrh_gmm_outputprob_lg(src, observ));
 }
 
-static FP_TYPE lrh_duration_prob_lg(lrh_duration* src, int duration) {
+FP_TYPE lrh_duration_prob_lg(lrh_duration* src, int duration) {
   if(duration < lrh_precompute_duration)
     return src -> _tmp_prep[duration];
   return lrh_duration_logp(src, duration);
 }
 
-static double lrh_duration_prob(lrh_duration* src, FP_TYPE duration) {
+double lrh_duration_prob(lrh_duration* src, FP_TYPE duration) {
   return fastexp(lrh_duration_prob(src, duration));
 }
 

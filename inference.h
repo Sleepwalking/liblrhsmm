@@ -31,6 +31,13 @@ typedef struct {
   int lower, upper;
 } lrh_pslice;
 
+FP_TYPE lrh_gmm_mixprob_lg(lrh_gmm* src, FP_TYPE* observ, int k);
+double lrh_gmm_mixprob(lrh_gmm* src, FP_TYPE* observ, int k);
+FP_TYPE lrh_gmm_outputprob_lg(lrh_gmm* src, FP_TYPE* observ);
+double lrh_gmm_outputprob(lrh_gmm* src, FP_TYPE* observ);
+FP_TYPE lrh_duration_prob_lg(lrh_duration* src, int duration);
+double lrh_duration_prob(lrh_duration* src, FP_TYPE duration);
+
 FP_TYPE* lrh_sample_outputprob_lg(lrh_model* model, lrh_observ* observ, lrh_seg* seg);
 FP_TYPE* lrh_sample_outputprob_lg_full(lrh_model* model, lrh_observ* observ, lrh_seg* seg);
 FP_TYPE* lrh_sample_outputprob(lrh_model* model, lrh_observ* observ, lrh_seg* seg);
