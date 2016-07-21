@@ -130,14 +130,19 @@
   int j = nseg - 1;
   int maxfrom = seg -> time[nseg - 2];
   FP_TYPE maxp = NEGINF;
-  // TODO: derive the optimal starting time of the last state and replace the following code
-  for(int t = seg -> time[nseg - 2]; t < nt; t ++)
-    if(p(t, nseg - 1) > maxp) {
-      maxp = p(t, nseg - 1);
-      maxfrom = t;
+
+  // maximize the total probability with regard to the onset of the last state
+  FP_TYPE pobserv = 0;
+  for(int d = 1; d < nt - 1; d ++) {
+    pobserv += p(nt - d, nseg - 1);
+    FP_TYPE p = pobserv + a(nt - d - 1, nseg - 1);
+    if(p > maxp) {
+      maxp = p;
+      maxfrom = nt - d;
     }
+  }
   reseg[nseg - 1] = maxfrom;
-  
+
   // Backtracking
   while(j > 0) {
     reseg[j - 1] = s(reseg[j], j);
