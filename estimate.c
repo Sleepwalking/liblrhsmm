@@ -204,8 +204,9 @@ FP_TYPE lrh_estimate_geometric(lrh_model_stat* dst, lrh_model* h, lrh_observ* ob
   FP_TYPE* b        = lrh_backward_geometric(h, seg, outp, observ -> nt);
   FP_TYPE total     = lrh_total_pseudo_backward(b, outp, seg -> nseg);
   lrh_pslice* strp  = lrh_sttran_geometric(h, seg, a, b, outp, total, observ -> nt, pool);
-  free(a); free(b); free(outp);
+  free(outp);
   FP_TYPE* socp     = lrh_stocp_geometric(h, seg, a, b, total, observ -> nt);
+  free(a); free(b);
 
   lrh_pslice** mocp = calloc(h -> nstream, sizeof(lrh_pslice*));
   for(int i = 0; i < h -> nstream; i ++)
