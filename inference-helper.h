@@ -26,7 +26,7 @@
 #define y(t, i) y_[(t) * nseg + (i)]
 #define m(t, i) m_[(t) * nseg + (i)]
 
-#define alloc_init(d) lrh_mempool_calloc(pool, d, sizeof(FP_TYPE))
+#define alloc_init(d) ((float*)lrh_mempool_calloc(pool, d, sizeof(FP_TYPE)))
 #define alloc(d) ((float*)lrh_mempool_malloc(pool, (d) * sizeof(FP_TYPE)))
 #define x_safe(t, i, d) ((d > x(t, i).upper || d < x(t, i).lower) ? 0 : x(t, i).p[d - x(t, i).lower])
 
