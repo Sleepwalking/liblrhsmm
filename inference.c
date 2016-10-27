@@ -467,7 +467,7 @@ lrh_pslice* lrh_sttran_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* a_, FP
     for(int j = max(0, t * nseg / nt - prune_range);
             j < min(nseg, t * nseg / nt + prune_range); j ++) {
       FP_TYPE pstay = 1.0 - 1.0 / max(1.01, model -> durations[seg -> durstate[j]] -> mean);
-      y(t, j).p = alloc(2);
+      y(t, j).p = alloc_init(2);
       y(t, j).upper = 2;
       y(t, j).p[0] = lrh_negexp(a(t - 1, j) + b(t, j) + p(t, j) + log(pstay) - total);
       if(j > 0) {
