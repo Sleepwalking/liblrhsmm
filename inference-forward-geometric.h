@@ -1,7 +1,7 @@
 /*
   liblrhsmm
   ===
-  Copyright (c) 2016 Kanru Hua. All rights reserved.
+  Copyright (c) 2016-2017 Kanru Hua. All rights reserved.
 
   This file is part of liblrhsmm.
 
@@ -37,6 +37,7 @@
   int* s_ = calloc(nt * nseg, sizeof(int));
   int* reseg = calloc(nseg, sizeof(int));
   int* states = calloc(nt, sizeof(int));
+  #define s(t, i) s_[(t) * nseg + (i)]
 # endif
 
   for(int t = 0; t < nt; t ++)

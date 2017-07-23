@@ -1,7 +1,7 @@
 /*
   liblrhsmm
   ===
-  Copyright (c) 2016 Kanru Hua. All rights reserved.
+  Copyright (c) 2016-2017 Kanru Hua. All rights reserved.
 
   This file is part of liblrhsmm.
 
@@ -165,75 +165,62 @@ FP_TYPE* lrh_backward(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt
 
   int nseg = seg -> nseg;
   FP_TYPE* p_ = output_lg;
-  FP_TYPE* b_ = calloc(nt * nseg, sizeof(FP_TYPE));
+  FP_TYPE* b_begin = calloc(nseg * nt, sizeof(FP_TYPE));
+  FP_TYPE* b_end   = calloc(nseg * nt, sizeof(FP_TYPE));
+# define bb(t, i) b_begin[(t) * nseg + (i)]
+# define be(t, i) b_end  [(t) * nseg + (i)]
 
   for(int t = 0; t < nt; t ++)
-  for(int i = 0; i < nseg; i ++)
-    b(t, i) = NEGINF;
+    for(int i = 0; i < nseg; i ++) {
+      bb(t, i) = NEGINF;
+      be(t, i) = NEGINF;
+    }
 
-  // t = nt-1, ..., 0
   for_tj_backward(0, 0, 1, 1)
     int jdur = seg -> time[j] - (j == 0 ? 0 : seg -> time[j - 1]);
     int maxdur, mindur = 1;
     lrh_duration* srcdr = model -> durations[seg -> durstate[j]];
     calculate_maxdur(srcdr, jdur);
-    FP_TYPE lgsum = NEGINF;
-    FP_TYPE pobserv = 0;
 
-    if(j + 1 == nseg) {
-      for(int d = 2; d <= nt - t; d ++)
-        pobserv += p(t + d - 1, j);
-      lgsum = pobserv;
-    } else {
-      int D = nt - t;
-      int Dmid = min(maxdur, D);
-      int d = mindur;
-      if(d == 1) { // d = 1 case
-        FP_TYPE pend = t + 1 < nt ? p(t + 1, j + 1) : 0;
-        FP_TYPE pdur = lrh_duration_prob_lg(srcdr, 1);
-        FP_TYPE pnext = t + 1 < nt ? b(t + 1, j + 1) : 0;
-        lgsum = pend + pdur + pnext; // lgsum was zero before this line
-        d = 2;
-      }
-      for(; d < Dmid; d ++) { // d > 1 && t + d < nt
-        pobserv += p(t + d - 1, j);
-        FP_TYPE pend = p(t + d, j + 1);
-        FP_TYPE pdur = lrh_duration_prob_lg(srcdr, d);
-        FP_TYPE pnext = b(t + d, j + 1);
-        lgsum = lrh_lse(lgsum, pobserv + pend + pdur + pnext);
-      }
-      if(d < maxdur && d == D) { // t + d = nt
-        pobserv += p(t + d - 1, j);
-        FP_TYPE pdur = lrh_duration_prob_lg(srcdr, d);
-        lgsum = lrh_lse(lgsum, pobserv + pdur); // pend = pnext = 0
-        d ++;
-      }
-      for(; d < maxdur; d ++) { // t + d > nt
-        FP_TYPE pdur = lrh_duration_prob_lg(srcdr, d);
-        lgsum = lrh_lse(lgsum, pobserv + pdur); // pend = pnext = 0
-      }
-/*    unoptimized code (for reference)
-      for(int d = mindur; d < maxdur; d ++) {
-        if(d > 1 && t + d <= nt)
-          pobserv += p(t + d - 1, j);
-        FP_TYPE pend = t + d < nt ? p(t + d, j + 1) : 0;
-        FP_TYPE pdur = lrh_duration_prob_lg(srcdr, d);
-        FP_TYPE pnext = t + d < nt ? b(t + d, j + 1) : 0;
-        lgsum = lrh_lse(lgsum, pobserv + pend + pdur + pnext);
-      } */
+    // compute termination probability
+    FP_TYPE pterm = NEGINF;
+    if(t + 1 < nt && j + 1 < nseg) {
+      pterm = p(t + 1, j + 1) + bb(t + 1, j + 1);
+    } else if(t + 1 == nt) {
+      pterm = 0;
     }
-    b(t, j) = lgsum;
+    be(t, j) = pterm;
+
+    // compute initiation probability
+    FP_TYPE pinit = NEGINF;
+    FP_TYPE pobserv = 0;
+    if(j == nseg - 1) {
+      pinit = 0;
+      for(int d = 2; d <= nt - t; d ++)
+        pinit += p(t + d - 1, j);
+    } else {
+      for(int d = 2; d < mindur; d ++) {
+        int t1 = t + d - 1;
+        pobserv += (t1 < nt) ? p(t1, j) : 0;
+      }
+      for(int d = mindur; d < maxdur; d ++) {
+        int t1 = t + d - 1;
+        pobserv += (t1 < nt && t1 > t) ? p(t1, j) : 0;
+        FP_TYPE pdur = lrh_duration_prob_lg(srcdr, d);
+        FP_TYPE porigin = t1 < nt ? be(t1, j) : 0;
+        pinit = lrh_lse(pinit, pobserv + pdur + porigin);
+      }
+    }
+
+    bb(t, j) = pinit;
+
   end_for_tj()
-/*
-//  if(lrh_debug_flag)
-  for(int t = nt - 1; t > 0; t --) {
-    FP_TYPE maxt = -9999999;
-    for(int j = 0; j < nseg; j ++)
-      maxt = max(b(t, j), maxt);
-    printf("%d %f\n", t, maxt);
-  }
-*/
-  return b_;
+
+# undef bb
+# undef be
+  free(b_end);
+
+  return b_begin;
 }
 
 FP_TYPE* lrh_backward_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt) {
@@ -548,4 +535,3 @@ lrh_pslice* lrh_mixocp_geometric(lrh_model* model, lrh_observ* observ, lrh_seg* 
 
   return m_;
 }
-
