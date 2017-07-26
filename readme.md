@@ -32,6 +32,7 @@ Users are expected to be familiar with Hidden Markov Models. The reference secti
 Reference
 ---
 
+* Hua, Kanru. ["Doing Inference in a LR-HSMM"](https://github.com/Sleepwalking/prometheus-spark/blob/master/writings/inference-lr-hsmm-hua-2015.pdf), 2015. Web.
 * Fink, Gernot A. *Markov models for pattern recognition: from theory to applications*. Springer Science & Business Media, 2014.
 * Young, Steve, et al. *The HTK Book (for HTK Version 3.4)*. Cambridge University Engineering Department, 2009.
 * Yu, Shun-Zheng. "Hidden semi-Markov models". *Artificial Intelligence* 174 (2010): 215-243. Print.
