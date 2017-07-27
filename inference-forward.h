@@ -28,9 +28,11 @@
 # ifdef VITERBI
   int* s_begin = calloc(nt * nseg, sizeof(int));
   int* s_end   = calloc(nt * nseg, sizeof(int));
-  int* reseg   = calloc(nseg, sizeof(int));
-#   define sb(t, i) s_begin[(t) * nseg + (i)]
-#   define se(t, i) s_end  [(t) * nseg + (i)]
+  int* t_reseg = calloc(nseg, sizeof(int));
+  int* s_reseg = calloc(nseg, sizeof(int));
+  int  n_reseg = 0;
+# define sb(t, i) s_begin[(t) * nseg + (i)]
+# define se(t, i) s_end  [(t) * nseg + (i)]
 # endif
 
 # define ab(t, i) a_begin[(t) * nseg + (i)]
@@ -52,12 +54,26 @@
 
     // compute initiation probability
     FP_TYPE pinit = NEGINF;
-    pinit = p(t, j) + (j > 0 && t > 0 ? ae(t - 1, j - 1) : 0);
+    int i = 0;
+    do { // for each transition into the j-th state
+      int srcst = j + seg -> djump_in[j][i];
+      if(srcst >= 0 && t > 0) {
+        FP_TYPE pj = ae(t - 1, srcst) + log(seg -> pjump_in[j][i]);
+#       ifdef VITERBI
+        if(pj > pinit) {
+          pinit = pj;
+          maxfrom = srcst;
+        }
+#       else
+        pinit = lrh_lse(pinit, pj);
+#       endif
+      }
+      i ++;
+    } while(seg -> djump_in[j][i - 1] != -1);
+    pinit += p(t, j);
     if(j == 0 && t > 0) pinit = NEGINF;
-    if(t == 0 && j > 0) pinit = NEGINF;
-#   ifdef VITERBI
-    maxfrom = j - 1;
-#   endif
+    else if(t == 0 && j > 0) pinit = NEGINF;
+    else if(t == 0 && j == 0) pinit = p(t, j);
     
     ab(t, j) = pinit;
 #   ifdef VITERBI
@@ -96,23 +112,35 @@
 
 # ifdef VITERBI
   // finalization
-  reseg[nseg - 1] = se(nt - 1, nseg - 1);
+  s_reseg[0] = nseg - 1;
+  t_reseg[0] = se(nt - 1, nseg - 1);
+  n_reseg ++;
 
   // backtracking
-  int j = nseg - 1;
-  while(j > 0) {
-    int trans = sb(reseg[j], j);
-    reseg[j - 1] = se(reseg[j] - 1, trans);
-    j --;
+  int i = s_reseg[0];
+  int t = t_reseg[0];
+  while(i != 0 && t > 0) {
+    i = sb(t, i);
+    t = se(t - 1, i);
+    s_reseg = realloc(s_reseg, sizeof(int) * (n_reseg + 1));
+    t_reseg = realloc(t_reseg, sizeof(int) * (n_reseg + 1));
+    s_reseg[n_reseg] = i;
+    t_reseg[n_reseg] = t;
+    n_reseg ++;
   }
   
-  // shift
-  for(int i = 0; i < nseg - 1; i ++)
-    reseg[i] = reseg[i + 1];
-  reseg[nseg - 1] = nt;
+  // build new segmentation
+  lrh_seg* reseg = lrh_create_seg(seg -> nstream, n_reseg);
+  for(int i = 0; i < n_reseg; i ++) {
+    int is = s_reseg[n_reseg - i - 1];
+    int it = i == n_reseg - 1 ? nt : t_reseg[n_reseg - i - 2];
+    reseg -> time[i] = it;
+    for(int l = 0; l < seg -> nstream; l ++)
+      reseg -> outstate[l][i] = seg -> outstate[l][is];
+    reseg -> durstate[i] = seg -> durstate[is];
+  }
 # endif
 
-  free(a_end);
 # undef ab
 # undef ae
 # ifdef VITERBI
@@ -120,10 +148,15 @@
     memcpy(forward, a_begin, nseg * nt * sizeof(FP_TYPE));
   free(s_begin); free(s_end);
   free(a_begin);
+  free(s_reseg); free(t_reseg);
   return reseg;
-#   undef sb
-#   undef se
+# undef sb
+# undef se
 # else
-  return a_begin;
+  if(ab_ != NULL)
+    *ab_ = a_begin;
+  else
+    free(a_begin);
+  return a_end;
 # endif
 }

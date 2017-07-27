@@ -1,7 +1,7 @@
 /*
   liblrhsmm
   ===
-  Copyright (c) 2016 Kanru Hua. All rights reserved.
+  Copyright (c) 2016-2017 Kanru Hua. All rights reserved.
 
   This file is part of liblrhsmm.
 
@@ -32,11 +32,16 @@ typedef struct {
 #define lrh_obm(obj, t, i, l) (((obj) -> data[l])[(t) * ((obj) -> ndim[l]) + i])
 
 typedef struct {
-  int* time;       // right boundary of each segmentation
+  int* time;       // right boundary of each segment
   int** outstate;  // stream-wise array of vectors of indices of output pdfs in lrh_stream
   int* durstate;   // vector of indices of duration pdfs in lrh_model
   int nstream;
   int nseg;
+
+  int**     djump_out; // jump delta (out-bound), terminates in 1
+  FP_TYPE** pjump_out; // jump probability (out-bound), terminates in next-trans prob.
+  int**     djump_in;  // jump delta (in-bound), terminates in -1
+  FP_TYPE** pjump_in;  // jump probability (in-bound), terminates in prev-trans prob.
 } lrh_seg;
 
 // container for unsegmented data
@@ -62,6 +67,7 @@ lrh_seg* lrh_seg_copy(lrh_seg* src);
 lrh_segset* lrh_segset_copy(lrh_segset* src);
 void lrh_delete_observ(lrh_observ* dst);
 void lrh_delete_seg(lrh_seg* dst);
+void lrh_seg_buildjumps(lrh_seg* dst);
 
 lrh_observset* lrh_create_empty_observset(int nsample);
 lrh_segset* lrh_create_empty_segset(int nsample);

@@ -1,7 +1,7 @@
 /*
   liblrhsmm
   ===
-  Copyright (c) 2016 Kanru Hua. All rights reserved.
+  Copyright (c) 2016-2017 Kanru Hua. All rights reserved.
 
   This file is part of liblrhsmm.
 
@@ -176,10 +176,11 @@ void lrh_collect_ocp_geometric(lrh_model_stat* dst, lrh_observ* observ, lrh_seg*
 FP_TYPE lrh_estimate(lrh_model_stat* dst, lrh_model* h, lrh_observ* observ, lrh_seg* seg) {
   lrh_mempool* pool = lrh_create_mempool(1024 * 1024);
   FP_TYPE* outp     = lrh_sample_outputprob_lg(h, observ, seg);
-  FP_TYPE* a        = lrh_forward(h, seg, outp, observ -> nt);
-  FP_TYPE* b        = lrh_backward(h, seg, outp, observ -> nt);
-  FP_TYPE total     = lrh_total_backward(b, outp, seg -> nseg);
-  lrh_pslice* docp = lrh_durocp(h, seg, a, b, outp, total, observ -> nt, pool);
+  FP_TYPE* a        = lrh_forward(h, seg, outp, observ -> nt, NULL);
+  FP_TYPE* b        = lrh_backward(h, seg, outp, observ -> nt, NULL);
+  FP_TYPE total     = lrh_total(a, b, observ -> nt, seg -> nseg, 0);
+
+  lrh_pslice* docp  = lrh_durocp(h, seg, a, b, outp, total, observ -> nt, pool);
   free(a); free(b); free(outp);
   FP_TYPE* socp     = lrh_stocp(h, seg, docp, observ -> nt);
 

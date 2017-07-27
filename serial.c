@@ -223,6 +223,17 @@ int lrh_write_seg(cmp_ctx_t* dst, lrh_seg* src) {
       if(! cmp_write_int(dst, src -> outstate[l][i])) return 0;
   }
   
+  if(! cmp_write_array(dst, src -> nseg)) return 0;
+  for(int i = 0; i < src -> nseg; i ++) {
+    int n_out = 0;
+    do n_out ++; while(src -> djump_out[i][n_out - 1] != 1);
+    if(! cmp_write_array(dst, n_out)) return 0;
+    for(int j = 0; j < n_out; j ++) {
+      if(! cmp_write_int(dst, src -> djump_out[i][j])) return 0;
+      if(! cmp_write_float(dst, src -> pjump_out[i][j])) return 0;
+    }
+  }
+
   return 1;
 }
 
@@ -286,29 +297,56 @@ lrh_seg* lrh_read_seg(cmp_ctx_t* src) {
   if(structsize != 3) return NULL;
   
   if(! cmp_read_array(src, & nseg)) return NULL;
-  lrh_seg* ret = malloc(sizeof(lrh_seg));
-  ret -> nseg = nseg; ret -> nstream = 0; ret -> outstate = NULL;
+  lrh_seg* ret = calloc(1, sizeof(lrh_seg));
+  ret -> nseg = nseg; ret -> nstream = 0;
   ret -> time = calloc(nseg, sizeof(int));
   ret -> durstate = calloc(nseg, sizeof(int));
   for(int i = 0; i < nseg; i ++)
-    if(! cmp_read_int(src, & ret -> time[i])) { lrh_delete_seg(ret); return NULL;}
+    if(! cmp_read_int(src, & ret -> time[i])) goto del_and_ret;
   
-  if(! cmp_read_array(src, & nseg)) { lrh_delete_seg(ret); return NULL;}
-  if(nseg != ret -> nseg) { lrh_delete_seg(ret); return NULL;}
+  if(! cmp_read_array(src, & nseg)) goto del_and_ret;
+  if(nseg != ret -> nseg)  goto del_and_ret;
   for(int i = 0; i < nseg; i ++)
-    if(! cmp_read_int(src, & ret -> durstate[i])) { lrh_delete_seg(ret); return NULL;}
+    if(! cmp_read_int(src, & ret -> durstate[i])) goto del_and_ret;
   
-  if(! cmp_read_array(src, & nstream)) { lrh_delete_seg(ret); return NULL;}
+  if(! cmp_read_array(src, & nstream)) goto del_and_ret;
   ret -> nstream = nstream;
   ret -> outstate = calloc(nstream, sizeof(int*));
   for(int l = 0; l < nstream; l ++) {
     ret -> outstate[l] = calloc(nseg, sizeof(int));
-    if(! cmp_read_array(src, & nseg)) { lrh_delete_seg(ret); return NULL;}
+    if(! cmp_read_array(src, & nseg)) goto del_and_ret;
     for(int i = 0; i < nseg; i ++)
-      if(! cmp_read_int(src, & ret -> outstate[l][i])) { lrh_delete_seg(ret); return NULL;}
+      if(! cmp_read_int(src, & ret -> outstate[l][i])) goto del_and_ret;
   }
   
+  if(! cmp_read_array(src, & nseg)) goto del_and_ret;
+  ret -> djump_out = calloc(nseg, sizeof(int*));
+  ret -> pjump_out = calloc(nseg, sizeof(FP_TYPE*));
+  for(int i = 0; i < nseg; i ++) {
+    uint32_t n_out = 0;
+    if(! cmp_read_array(src, & n_out)) goto del_and_ret;
+    ret -> djump_out[i] = calloc(n_out, sizeof(int));
+    ret -> pjump_out[i] = calloc(n_out, sizeof(FP_TYPE));
+    for(int j = 0; j < n_out; j ++) {
+      if(! cmp_read_int  (src, & ret -> djump_out[i][j])) goto del_and_ret;
+      if(! cmp_read_float(src, & ret -> pjump_out[i][j])) goto del_and_ret;
+    }
+  }
+
+  ret -> djump_in  = calloc(nseg, sizeof(int*));
+  ret -> pjump_in  = calloc(nseg, sizeof(FP_TYPE*));
+  for(int i = 0; i < nseg; i ++) {
+    ret -> djump_in [i] = malloc(sizeof(int));
+    ret -> pjump_in [i] = malloc(sizeof(FP_TYPE));
+    ret -> djump_in [i][0] = -1;
+    ret -> pjump_in [i][0] = 1.0;
+  }
+
   return ret;
+
+del_and_ret:
+  lrh_delete_seg(ret);
+  return NULL;
 }
 
 lrh_segset* lrh_read_segset(cmp_ctx_t* src) {

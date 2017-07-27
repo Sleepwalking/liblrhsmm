@@ -17,21 +17,28 @@ LIBS = -lm
 
 default: $(OUT_DIR)/liblrhsmm.a
 
-test-mempool: test/test-mempool
-	test/test-mempool
 test: test/test-random-model
 	test/test-random-model
+test-jumps: test/test-state-jumps
+	test/test-state-jumps
+test-mempool: test/test-mempool
+	test/test-mempool
 
 $(OUT_DIR)/liblrhsmm.a: $(OBJS)
 	$(AR) $(ARFLAGS) $(OUT_DIR)/liblrhsmm.a $(OBJS)
 	@echo Done.
 
-test/test-random-model: test/test-random-model.c $(OUT_DIR)/liblrhsmm.a
-	$(LINK) test/test-random-model.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) \
-	  -o test/test-random-model -Wno-unused-function
+test/test-random-model: test/test-random-model.c test/test-common.h $(OUT_DIR)/liblrhsmm.a
+	$(LINK) test/test-random-model.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) -Wno-unused-function \
+	  -o test/test-random-model
+
+test/test-state-jumps: test/test-state-jumps.c test/test-common.h $(OUT_DIR)/liblrhsmm.a
+	$(LINK) test/test-state-jumps.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) -Wno-unused-function \
+	  -o test/test-state-jumps
 
 test/test-mempool: test/test-mempool.c $(OUT_DIR)/liblrhsmm.a
-	$(LINK) test/test-mempool.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) -o test/test-mempool -Wno-unused-function
+	$(LINK) test/test-mempool.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) -Wno-unused-function \
+	  -o test/test-mempool
 	test/test-mempool
 
 $(OUT_DIR)/common.o: common.c common.h
