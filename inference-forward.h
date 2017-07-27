@@ -129,16 +129,14 @@
     n_reseg ++;
   }
   
-  // build new segmentation
-  lrh_seg* reseg = lrh_create_seg(seg -> nstream, n_reseg);
+  // merge and reverse segmentation sequences
+  int* reseg = calloc(n_reseg * 2 + 2, sizeof(int));
   for(int i = 0; i < n_reseg; i ++) {
-    int is = s_reseg[n_reseg - i - 1];
-    int it = i == n_reseg - 1 ? nt : t_reseg[n_reseg - i - 2];
-    reseg -> time[i] = it;
-    for(int l = 0; l < seg -> nstream; l ++)
-      reseg -> outstate[l][i] = seg -> outstate[l][is];
-    reseg -> durstate[i] = seg -> durstate[is];
+    reseg[i * 2 + 0] = i == n_reseg - 1 ? nt : t_reseg[n_reseg - i - 2];
+    reseg[i * 2 + 1] = s_reseg[n_reseg - i - 1];
   }
+  reseg[n_reseg * 2 + 0] = -1;
+  reseg[n_reseg * 2 + 1] = -1;
 # endif
 
 # undef ab

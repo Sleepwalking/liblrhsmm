@@ -140,7 +140,7 @@ FP_TYPE* lrh_forward(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt,
   #include "inference-forward.h"
 }
 
-lrh_seg* lrh_viterbi(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt,
+int* lrh_viterbi(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt,
   FP_TYPE** forward) {
   lrh_model_precompute(model);
   #define VITERBI

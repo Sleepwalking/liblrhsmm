@@ -256,3 +256,17 @@ lrh_dataset* lrh_regroup_data(lrh_observset* srcobset, lrh_segset* srcsgset, int
   return ret;
 }
 
+lrh_seg* lrh_seg_shuffle(lrh_seg* src, int* shufidx) {
+  int nreseg = 0;
+  while(shufidx[nreseg * 2] != -1) nreseg ++;
+  lrh_seg* reseg = lrh_create_seg(src -> nstream, nreseg);
+  for(int i = 0; i < nreseg; i ++) {
+    int it = shufidx[i * 2 + 0];
+    int is = shufidx[i * 2 + 1];
+    reseg -> time[i] = it;
+    for(int l = 0; l < src -> nstream; l ++)
+      reseg -> outstate[l][i] = src -> outstate[l][is];
+    reseg -> durstate[i] = src -> durstate[is];
+  }
+  return reseg;
+}

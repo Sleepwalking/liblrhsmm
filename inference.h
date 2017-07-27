@@ -49,11 +49,19 @@ FP_TYPE* lrh_sample_outputprob(lrh_model* model, lrh_observ* observ, lrh_seg* se
   bb: backward initiation probability     p(o_{t+1}, ..., o_T | s*_t = i)
   lrh_forward returns ae by default; ab is optional (to be allocated, which can be NULL)
   lrh_backward returns be by default; bb is optional (to be allocated, which can be NULL)
+  lrh_viterbi returns an interleaving state/time sequence and optionally allocates and writes
+    forward termination probability (MAP) to argument ae.
+    Format of returned sequence: [t0, s0, t1, s1, t2, s2, ..., -1, -1]
+    where s0, s1, ... are the indices of states in the input sequence.
   In most cases ae/be instead of ab/bb are used for the following computation.
+
+  lrh_viterbi_geometric, lrh_forward_geometric and lrh_backward_geometric do not support
+    jump transitions yet.
+  lrh_viterbi_geometric returns a time sequence.
 */
 FP_TYPE* lrh_forward(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt, FP_TYPE** ab);
 FP_TYPE* lrh_forward_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt);
-lrh_seg* lrh_viterbi(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt, FP_TYPE** ae);
+int*     lrh_viterbi(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt, FP_TYPE** ae);
 int*     lrh_viterbi_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt, FP_TYPE** a);
 FP_TYPE* lrh_backward(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt, FP_TYPE** bb);
 FP_TYPE* lrh_backward_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt);
@@ -88,7 +96,7 @@ lrh_pslice* lrh_durocp(lrh_model* model, lrh_seg* seg, FP_TYPE* ae, FP_TYPE* be,
   FP_TYPE* output_lg, FP_TYPE total, int nt, lrh_mempool* pool);
 lrh_pslice* lrh_sttran_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* a, FP_TYPE* b,
   FP_TYPE* output_lg, FP_TYPE total, int nt, lrh_mempool* pool);
-FP_TYPE   * lrh_stocp(lrh_model* model, lrh_seg* seg, lrh_pslice* durocp, int nt);
+FP_TYPE*    lrh_stocp(lrh_model* model, lrh_seg* seg, lrh_pslice* durocp, int nt);
 lrh_pslice* lrh_mixocp(lrh_model* model, lrh_observ* observ, lrh_seg* seg,
   FP_TYPE* stocp, int stream, lrh_mempool* pool);
 FP_TYPE*    lrh_stocp_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* a, FP_TYPE* b,

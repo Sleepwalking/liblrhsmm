@@ -31,7 +31,7 @@
 static void inference_sample(lrh_model* h, lrh_observ* ob, lrh_seg* seg) {
   lrh_mempool* pool = lrh_create_mempool(1024 * 1024);
   FP_TYPE* outp   = lrh_sample_outputprob_lg(h, ob, seg);
-  lrh_seg* reseg  = lrh_viterbi (h, seg, outp, ob -> nt, NULL);
+  int* reseg      = lrh_viterbi (h, seg, outp, ob -> nt, NULL);
   FP_TYPE* ab, *bb;
   FP_TYPE* a      = lrh_forward (h, seg, outp, ob -> nt, & ab);
   FP_TYPE* av     = lrh_forward_geometric(h, seg, outp, ob -> nt);
@@ -58,7 +58,8 @@ static void inference_sample(lrh_model* h, lrh_observ* ob, lrh_seg* seg) {
 
   printf("Re-alignment:\n");
   for(int i = 0; i < seg -> nseg; i ++)
-    printf("%d\t%d\t(%d)\n", reseg -> time[i], seg -> time[i], reseg -> time[i] - seg -> time[i]);
+    printf("%d\t%d\t(%d)\n", reseg[i * 2 + 0], seg -> time[i],
+      reseg[i * 2 + 0] - seg -> time[i]);
 
   printf("Total probabilities estimated at each state:\n");
   for(int i = 0; i < seg -> nseg; i ++) {
@@ -79,7 +80,6 @@ static void inference_sample(lrh_model* h, lrh_observ* ob, lrh_seg* seg) {
 
   free(a); free(b); free(ab); free(bb);
   free(dp); free(sp); free(av); free(bv); free(spv); free(tpv); free(outp);
-  lrh_delete_seg(reseg);
   lrh_delete_mempool(pool);
 }
 

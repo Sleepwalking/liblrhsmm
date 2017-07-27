@@ -32,7 +32,7 @@
 static void inference_sample(lrh_model* h, lrh_observ* ob, lrh_seg* seg) {
   lrh_mempool* pool = lrh_create_mempool(1024 * 1024);
   FP_TYPE* outp   = lrh_sample_outputprob_lg(h, ob, seg);
-  lrh_seg* reseg  = lrh_viterbi (h, seg, outp, ob -> nt, NULL);
+  int* reseg      = lrh_viterbi (h, seg, outp, ob -> nt, NULL);
   FP_TYPE* ab, *bb;
   FP_TYPE* a      = lrh_forward (h, seg, outp, ob -> nt, & ab);
   FP_TYPE* av     = lrh_forward_geometric(h, seg, outp, ob -> nt);
@@ -58,17 +58,26 @@ static void inference_sample(lrh_model* h, lrh_observ* ob, lrh_seg* seg) {
 
   print_seg(seg);
 
+  lrh_seg* shufseg = lrh_seg_shuffle(seg, reseg);
+
   printf("Re-alignment:\n");
-  int maxnseg = fmax(seg -> nseg, reseg -> nseg);
+  int nreseg = 0;
+  while(reseg[nreseg * 2] != -1) nreseg ++;
+  int maxnseg = fmax(seg -> nseg, nreseg);
   for(int i = 0; i < maxnseg; i ++) {
-    if(i < reseg -> nseg)
-      printf("%d(%d)\t", reseg -> time[i], reseg -> durstate[i]);
+    if(i < nreseg)
+      printf("%3d(%2d,%2d)  ", reseg[i * 2 + 0], reseg[i * 2 + 1], shufseg -> durstate[i]);
+    else
+      printf("            ");
     if(i < seg -> nseg)
       printf("%d(%d)\t", seg -> time[i], seg -> durstate[i]);
-    if(i < reseg -> nseg && i < seg -> nseg)
-      printf("(%d)", reseg -> time[i] - seg -> time[i]);
+    else
+      printf("\t");
+    if(i < nreseg && i < seg -> nseg)
+      printf("(%d)", reseg[i * 2 + 0] - seg -> time[i]);
     printf("\n");
   }
+  lrh_delete_seg(shufseg);
 
   printf("Total probabilities estimated at each state:\n");
   for(int i = 0; i < seg -> nseg; i ++) {
@@ -88,7 +97,6 @@ static void inference_sample(lrh_model* h, lrh_observ* ob, lrh_seg* seg) {
 
   free(a); free(b); free(ab); free(bb);
   free(dp); free(sp); free(av); free(bv); free(spv); free(tpv); free(outp);
-  lrh_delete_seg(reseg);
   lrh_delete_mempool(pool);
 }
 

@@ -23,7 +23,7 @@
 #define LRHSMM_DATA_H
 
 typedef struct {
-  FP_TYPE** data;   // stream-wise array of matrices (time * dimension)
+  FP_TYPE** data;  // stream-wise array of matrices (time * dimension)
   int nstream, nt;
   int* ndim;       // dimension of each stream
 } lrh_observ;
@@ -77,5 +77,7 @@ void lrh_delete_segset(lrh_segset* dst);
 // regroup observation and segmentation into smaller units
 lrh_dataset* lrh_regroup_data(lrh_observset* srcobset, lrh_segset* srcsgset, int unitsize);
 
-#endif
+// shuffle the segments based on the sequence returned from lrh_viterbi
+lrh_seg* lrh_seg_shuffle(lrh_seg* src, int* shufidx);
 
+#endif
