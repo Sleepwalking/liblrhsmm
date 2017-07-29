@@ -58,7 +58,8 @@
     do { // for each transition into the j-th state
       int srcst = j + seg -> djump_in[j][i];
       if(srcst >= 0 && t > 0) {
-        FP_TYPE pj = ae(t - 1, srcst) + log(seg -> pjump_in[j][i]);
+        FP_TYPE pj = ae(t - 1, srcst) +
+          log(seg -> pjump_in[j][i]) * lrh_daem_temperature;
 #       ifdef VITERBI
         if(pj > pinit) {
           pinit = pj;

@@ -47,13 +47,13 @@ double lrh_gmm_mixprob(lrh_gmm* src, FP_TYPE* observ, int k) {
 
 FP_TYPE lrh_gmm_outputprob_lg(lrh_gmm* src, FP_TYPE* observ) {
   if(src -> nmix == 1) { // single mixture case
-    return lrh_gmm_mixprob_lg(src, observ, 0);
+    return lrh_gmm_mixprob_lg(src, observ, 0) * lrh_daem_temperature;
   } else { // multi-mixture case
     double p = 0;
     for(int k = 0; k < src -> nmix; k ++) { // k: mixture number
       p += lrh_gmm_mixprob(src, observ, k) * src -> weight[k];
     }
-    return max(fastlog(p), NEGINF);
+    return max(fastlog(p), NEGINF) * lrh_daem_temperature;
   }
 }
 
@@ -63,8 +63,8 @@ double lrh_gmm_outputprob(lrh_gmm* src, FP_TYPE* observ) {
 
 FP_TYPE lrh_duration_prob_lg(lrh_duration* src, int duration) {
   if(duration < lrh_precompute_duration)
-    return src -> _tmp_prep[duration];
-  return lrh_duration_logp(src, duration);
+    return src -> _tmp_prep[duration] * lrh_daem_temperature;
+  return lrh_duration_logp(src, duration) * lrh_daem_temperature;
 }
 
 double lrh_duration_prob(lrh_duration* src, FP_TYPE duration) {
@@ -190,7 +190,7 @@ FP_TYPE* lrh_backward(lrh_model* model, lrh_seg* seg, FP_TYPE* output_lg, int nt
         int dstst = j + seg -> djump_out[j][i];
         if(dstst < nt) {
           FP_TYPE pj = p(t + 1, dstst) + bb(t + 1, dstst) +
-            log(seg -> pjump_out[j][i]);
+            log(seg -> pjump_out[j][i]) * lrh_daem_temperature;
           pterm = lrh_lse(pterm, pj);
         }
         i ++;
@@ -256,11 +256,11 @@ FP_TYPE* lrh_backward_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* output_
             j < min(nseg, t * nseg / nt + prune_range); j ++) {
       FP_TYPE pstay = 1.0 - 1.0 / max(1.01, model -> durations[seg -> durstate[j]] -> mean);
       
-      FP_TYPE p = b(t + 1, j) + p(t + 1, j) + log(pstay);
+      FP_TYPE p = b(t + 1, j) + p(t + 1, j) + log(pstay) * lrh_daem_temperature;
       FP_TYPE lgsum = p;
       if(j != nseg - 1) {
         FP_TYPE ptrans = 1.0 / max(1.01, model -> durations[seg -> durstate[j]] -> mean);
-        p = b(t + 1, j + 1) + p(t + 1, j + 1) + log(ptrans);
+        p = b(t + 1, j + 1) + p(t + 1, j + 1) + log(ptrans) * lrh_daem_temperature;
         lgsum = lrh_lse(lgsum, p);
       }
 
@@ -331,7 +331,8 @@ lrh_pslice* lrh_durocp(lrh_model* model, lrh_seg* seg, FP_TYPE* forward, FP_TYPE
     do { // for each the j-th state
       int srcst = j + seg -> djump_in[j][i];
       if(srcst >= 0 && t > 0) {
-        FP_TYPE pj = ae(t - 1, srcst) + log(seg -> pjump_in[j][i]);
+        FP_TYPE pj = ae(t - 1, srcst) +
+          log(seg -> pjump_in[j][i]) * lrh_daem_temperature;
         pprev = lrh_lse(pprev, pj);
       }
       i ++;
@@ -441,11 +442,13 @@ lrh_pslice* lrh_sttran_geometric(lrh_model* model, lrh_seg* seg, FP_TYPE* a_, FP
       FP_TYPE pstay = 1.0 - 1.0 / max(1.01, model -> durations[seg -> durstate[j]] -> mean);
       y(t, j).p = alloc(2);
       y(t, j).upper = 2;
-      y(t, j).p[0] = lrh_negexp(a(t - 1, j) + b(t, j) + p(t, j) + log(pstay) - total);
+      y(t, j).p[0] = lrh_negexp(a(t - 1, j) + b(t, j) + p(t, j) +
+        log(pstay) * lrh_daem_temperature - total);
       y(t, j).p[1] = 1;
       if(j > 0) {
         FP_TYPE ptrans = 1.0 / max(1.01, model -> durations[seg -> durstate[j - 1]] -> mean);
-        y(t, j).p[1] = lrh_negexp(a(t - 1, j - 1) + b(t, j) + p(t, j) + log(ptrans) - total);
+        y(t, j).p[1] = lrh_negexp(a(t - 1, j - 1) + b(t, j) + p(t, j) +
+          log(ptrans) * lrh_daem_temperature - total);
       }
     }
   }
@@ -473,10 +476,12 @@ lrh_pslice* lrh_mixocp(lrh_model* model, lrh_observ* observ, lrh_seg* seg,
     lrh_gmm* srcmx = model -> streams[stream] -> gmms[seg -> outstate[stream][j]];
     m(t, j).p = alloc(srcmx -> nmix);
     m(t, j).upper = srcmx -> nmix;
-    FP_TYPE mop = fastlog(y(t, j)) - lrh_gmm_outputprob_lg(srcmx, & lrh_obm(observ, t, 0, stream));
+    FP_TYPE mop = fastlog(y(t, j)) -
+      lrh_gmm_outputprob_lg(srcmx, & lrh_obm(observ, t, 0, stream));
     for(int k = 0; k < srcmx -> nmix; k ++) {
       m(t, j).p[k] = srcmx -> weight[k] *
-        lrh_exp(mop + lrh_gmm_mixprob_lg(srcmx, & lrh_obm(observ, t, 0, stream), k));
+        lrh_exp(mop + lrh_gmm_mixprob_lg(srcmx, & lrh_obm(observ, t, 0, stream), k) *
+          lrh_daem_temperature);
       if(isnan(m(t, j).p[k])) // in case that the probability is too low
         m(t, j).p[k] = 0;
     }
@@ -508,10 +513,12 @@ lrh_pslice* lrh_mixocp_geometric(lrh_model* model, lrh_observ* observ, lrh_seg* 
       lrh_gmm* srcmx = model -> streams[stream] -> gmms[seg -> outstate[stream][j]];
       m(t, j).p = alloc(srcmx -> nmix);
       m(t, j).upper = srcmx -> nmix;
-      FP_TYPE mop = fastlog(y(t, j)) - lrh_gmm_outputprob_lg(srcmx, & lrh_obm(observ, t, 0, stream));
+      FP_TYPE mop = fastlog(y(t, j)) -
+        lrh_gmm_outputprob_lg(srcmx, & lrh_obm(observ, t, 0, stream));
       for(int k = 0; k < srcmx -> nmix; k ++) {
         m(t, j).p[k] = srcmx -> weight[k] *
-          lrh_negexp(mop + lrh_gmm_mixprob_lg(srcmx, & lrh_obm(observ, t, 0, stream), k));
+          lrh_negexp(mop + lrh_gmm_mixprob_lg(srcmx, & lrh_obm(observ, t, 0, stream), k) *
+             lrh_daem_temperature);
         if(isnan(m(t, j).p[k])) // in case that the probability is too low
           m(t, j).p[k] = 0;
       }

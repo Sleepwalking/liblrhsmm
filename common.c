@@ -29,4 +29,4 @@ FP_TYPE lrh_inference_stprune_full_slope = 0.3;
 int     lrh_inference_duration_extra = 30;
 FP_TYPE lrh_inference_duration_extra_factor = 1;
 int     lrh_precompute_duration = 300;
-
+FP_TYPE lrh_daem_temperature = 1.0;

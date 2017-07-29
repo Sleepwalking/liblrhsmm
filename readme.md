@@ -39,3 +39,4 @@ Reference
 * Young, Steve, et al. *The HTK Book (for HTK Version 3.4)*. Cambridge University Engineering Department, 2009.
 * Yu, Shun-Zheng. "Hidden semi-Markov models". *Artificial Intelligence* 174 (2010): 215-243. Print.
 * Zen, Heiga, et al. "Hidden Semi-Markov Model Based Speech Synthesis". *ICSLP* (2004). Conference.
+* Itaya, Yohei, et al. "Deterministic Annealing EM Algorithm in Acoustic Modeling for Speaker and Speech Recognition". IEICE Trans. Inf. & Syst., Vol E88-D, No. 3. pp. 425-431. 2005.

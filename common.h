@@ -34,6 +34,7 @@ extern FP_TYPE lrh_inference_stprune_full_slope;
 extern int     lrh_inference_duration_extra;
 extern FP_TYPE lrh_inference_duration_extra_factor;
 extern int     lrh_precompute_duration;
+extern FP_TYPE lrh_daem_temperature;
 
 #endif
 

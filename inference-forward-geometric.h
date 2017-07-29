@@ -63,7 +63,7 @@
       FP_TYPE p;
 
       // j -> j
-      p = a(t - 1, j) + log(pstay);
+      p = a(t - 1, j) + log(pstay) * lrh_daem_temperature;
 #     ifdef VITERBI
       if(p > maxlg) {
         maxlg = p;
@@ -76,7 +76,7 @@
       // j - 1 -> j
       if(j > 0) {
         FP_TYPE ptrans = 1.0 / max(1.01, model -> durations[seg -> durstate[j - 1]] -> mean);
-        p = a(t - 1, j - 1) + log(ptrans);
+        p = a(t - 1, j - 1) + log(ptrans) * lrh_daem_temperature;
 #       ifdef VITERBI
         if(p > maxlg) {
           maxlg = p;
