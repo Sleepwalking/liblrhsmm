@@ -396,8 +396,17 @@ FP_TYPE* lrh_stocp(lrh_model* model, lrh_seg* seg, lrh_pslice* durocp, int nt) {
           xsum += slice.p[v + base];
       }
     }
-    y(t, j) = min(1.0, xsum);
+    y(t, j) = xsum;
+    //y(t, j) = min(1.0, xsum);
   end_for_tj()
+
+  for(int t = 0; t < nt; t ++) {
+    FP_TYPE psumt = 0;
+    for(int j = 0; j < nseg; j ++)
+      psumt += y(t, j);
+    for(int j = 0; j < nseg; j ++)
+      y(t, j) /= psumt + EPS;
+  }
 
   return y_;
 }
