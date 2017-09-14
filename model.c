@@ -33,6 +33,8 @@ lrh_gmm* lrh_create_gmm(int nmix, int ndim) {
   ret -> mean = calloc(nmix * ndim, sizeof(FP_TYPE));
   ret -> var = calloc(nmix * ndim, sizeof(FP_TYPE));
   ret -> weight = calloc(nmix, sizeof(FP_TYPE));
+
+  ret -> vfloor = calloc(nmix * ndim, sizeof(FP_TYPE));
   ret -> _tmp_term = calloc(nmix, sizeof(FP_TYPE));
   ret -> nmix = nmix;
   ret -> ndim = ndim;
@@ -96,6 +98,7 @@ void lrh_delete_gmm(lrh_gmm* dst) {
   if(dst == NULL) return;
   free(dst -> mean);
   free(dst -> var);
+  free(dst -> vfloor);
   free(dst -> weight);
   free(dst -> _tmp_term);
   free(dst);
@@ -131,6 +134,7 @@ lrh_gmm* lrh_gmm_copy(lrh_gmm* src) {
   lrh_gmm* ret = lrh_create_gmm(src -> nmix, src -> ndim);
   memcpy(ret -> mean, src -> mean, sizeof(FP_TYPE) * src -> nmix * src -> ndim);
   memcpy(ret -> var , src -> var , sizeof(FP_TYPE) * src -> nmix * src -> ndim);
+  memcpy(ret -> vfloor, src -> vfloor, sizeof(FP_TYPE) * src -> nmix * src -> ndim);
   memcpy(ret -> weight, src -> weight, sizeof(FP_TYPE) * src -> nmix);
   return ret;
 }
@@ -165,7 +169,9 @@ lrh_gmm* lrh_combine_gmm(lrh_gmm** src, int nsrc) {
   for(int i = 0; i < nsrc; i ++)
     for(int j = 0; j < src[i] -> ndim; j ++) {
       ret -> mean[n] = src[i] -> mean[j];
-      ret -> var[n ++] = src[i] -> var[j];
+      ret -> vfloor[n] = src[i] -> vfloor[j];
+      ret -> var[n] = src[i] -> var[j];
+      n ++;
     }
   return ret;
 }
@@ -185,6 +191,7 @@ static void lrh_gmm_mixuniinc(lrh_gmm* dst, FP_TYPE d) {
     lrh_gmmu(dst, ndst, i) = lrh_gmmu(dst, nsrc, i) + sqrt(lrh_gmmv(dst, nsrc, i)) * d;
     lrh_gmmv(dst, ndst, i) = lrh_gmmv(dst, nsrc, i);
     lrh_gmmu(dst, nsrc, i) -= sqrt(lrh_gmmv(dst, nsrc, i)) * d;
+    lrh_gmmvf(dst, ndst, i) = lrh_gmmvf(dst, nsrc, i);
   }
   dst -> nmix ++;
 }
@@ -193,6 +200,7 @@ void lrh_gmm_mixinc(lrh_gmm* dst, int nmix, FP_TYPE d) {
   if(dst -> nmix >= nmix) return;
   dst -> mean = realloc(dst -> mean, sizeof(FP_TYPE) * nmix * dst -> ndim);
   dst -> var  = realloc(dst -> var , sizeof(FP_TYPE) * nmix * dst -> ndim);
+  dst -> vfloor = realloc(dst -> vfloor, sizeof(FP_TYPE) * nmix * dst -> ndim);
   dst -> weight = realloc(dst -> weight, sizeof(FP_TYPE) * nmix);
   while(dst -> nmix != nmix)
     lrh_gmm_mixuniinc(dst, d);
@@ -330,4 +338,3 @@ void lrh_model_stat_clear(lrh_model_stat* dst) {
   for(int i = 0; i < dst -> nduration; i ++)
     lrh_duration_stat_clear(dst -> durations[i]);
 }
-

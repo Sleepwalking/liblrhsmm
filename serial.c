@@ -42,12 +42,13 @@ int lrh_write_gmm(cmp_ctx_t* dst, lrh_gmm* src) {
   for(int i = 0; i < src -> nmix; i ++)
     if(! cmp_write_float(dst, src -> weight[i])) return 0;
   
-  // array for mean & var
-  if(! cmp_write_array(dst, src -> nmix * src -> ndim * 2)) return 0;
+  // array for mean & var & varfloor
+  if(! cmp_write_array(dst, src -> nmix * src -> ndim * 3)) return 0;
   for(int i = 0; i < src -> nmix; i ++)
     for(int j = 0; j < src -> ndim; j ++) {
-      if(! cmp_write_float(dst, lrh_gmmu(src, i, j))) return 0;
-      if(! cmp_write_float(dst, lrh_gmmv(src, i, j))) return 0;
+      if(! cmp_write_float(dst, lrh_gmmu (src, i, j))) return 0;
+      if(! cmp_write_float(dst, lrh_gmmv (src, i, j))) return 0;
+      if(! cmp_write_float(dst, lrh_gmmvf(src, i, j))) return 0;
     }
   
   return 1;
@@ -120,7 +121,7 @@ lrh_gmm* lrh_read_gmm(cmp_ctx_t* src) {
   
   uint32_t matsize;
   if(! cmp_read_array(src, & matsize)) { lrh_delete_gmm(ret); return NULL;}
-  if(matsize != nmix * ndim * 2) { lrh_delete_gmm(ret); return NULL;}
+  if(matsize != nmix * ndim * 3) { lrh_delete_gmm(ret); return NULL;}
   for(int i = 0; i < nmix; i ++)
     for(int j = 0; j < ndim; j ++) {
       float tmp;
@@ -128,6 +129,8 @@ lrh_gmm* lrh_read_gmm(cmp_ctx_t* src) {
       lrh_gmmu(ret, i, j) = tmp;
       if(! cmp_read_float(src, & tmp)) { lrh_delete_gmm(ret); return NULL;}
       lrh_gmmv(ret, i, j) = tmp;
+      if(! cmp_read_float(src, & tmp)) { lrh_delete_gmm(ret); return NULL;}
+      lrh_gmmvf(ret, i, j) = tmp;
     }
   
   return ret;
@@ -361,4 +364,3 @@ lrh_segset* lrh_read_segset(cmp_ctx_t* src) {
   
   return ret;
 }
-

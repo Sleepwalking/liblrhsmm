@@ -42,7 +42,8 @@ typedef struct {
   FP_TYPE* mean;   // matrix of the mean vector in each mixture
   FP_TYPE* var;    // matrix of the diagonal variance vector in each mixture
   FP_TYPE* weight; // vector of mixture weights
-  
+  FP_TYPE* vfloor; // matrix of variance floor, associated with var
+
   FP_TYPE* _tmp_term; // vector of constant terms (one for each mixture component)
   int nmix, ndim;  // number of mixture and dimension
 } lrh_gmm;
@@ -58,8 +59,9 @@ typedef struct {
 
 #define lrh_gmmu(obj, k, i) (((obj) -> mean)[k * ((obj) -> ndim) + i]) // access mean of mixture k, dimension i
 #define lrh_gmmv(obj, k, i) (((obj) -> var )[k * ((obj) -> ndim) + i]) // access variance of mixture k, dimension i
-#define lrh_gmmvs(obj, k, i) (((obj) -> valsum)[k * ((obj) -> ndim) + i])
-#define lrh_gmmss(obj, k, i) (((obj) -> sqrsum)[k * ((obj) -> ndim) + i])
+#define lrh_gmmvf(obj, k, i) (((obj) -> vfloor)[k * ((obj) -> ndim) + i]) // access variance floor
+#define lrh_gmmvs(obj, k, i) (((obj) -> valsum)[k * ((obj) -> ndim) + i]) // access 1st momentum sum
+#define lrh_gmmss(obj, k, i) (((obj) -> sqrsum)[k * ((obj) -> ndim) + i]) // access 2nd momentum sum
 
 typedef struct {
   lrh_gmm** gmms; // array of Gaussian mixture models

@@ -51,6 +51,7 @@ void lrh_gmm_update(lrh_gmm* dst, lrh_gmm_stat* src, int geometric) {
       lrh_gmmu(dst, k, i) = lrh_gmmvs(src, k, i) / wk;
       lrh_gmmv(dst, k, i) = lrh_gmmss(src, k, i) / wk - lrh_gmmu(dst, k, i) * lrh_gmmu(dst, k, i);
       lrh_gmmv(dst, k, i) = fmax(lrh_gmmv(dst, k, i), lrh_output_vfloor);
+      lrh_gmmv(dst, k, i) = fmax(lrh_gmmv(dst, k, i), lrh_gmmvf(dst, k, i));
     }
     dst -> _tmp_term[k] = LRH_UNINITIALIZED;
   }
