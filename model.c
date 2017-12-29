@@ -219,6 +219,7 @@ void lrh_gmm_mixinc(lrh_gmm* dst, int nmix, FP_TYPE d) {
 }
 
 void lrh_model_precompute(lrh_model* dst) {
+# pragma omp critical
   for(int l = 0; l < dst -> nstream; l ++) {
     for(int i = 0; i < dst -> streams[l] -> ngmm; i ++) {
       lrh_gmm* igmm = dst -> streams[l] -> gmms[i];
@@ -233,6 +234,7 @@ void lrh_model_precompute(lrh_model* dst) {
       }
     }
   }
+# pragma omp critical
   for(int i = 0; i < dst -> nduration; i ++) {
     lrh_duration* idur = dst -> durations[i];
     if(idur -> _tmp_term == LRH_UNINITIALIZED) {
