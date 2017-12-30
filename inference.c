@@ -63,7 +63,7 @@ double lrh_gmm_outputprob(lrh_gmm* src, FP_TYPE* observ) {
 
 FP_TYPE lrh_duration_prob_lg(lrh_duration* src, int duration) {
   if(duration < lrh_precompute_duration)
-    return src -> _tmp_prep[duration] * lrh_daem_temperature;
+    return src -> _tmp_prep[duration];
   return lrh_duration_logp(src, duration) * lrh_daem_temperature;
 }
 

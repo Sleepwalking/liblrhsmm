@@ -240,7 +240,7 @@ void lrh_model_precompute(lrh_model* dst) {
     if(idur -> _tmp_term == LRH_UNINITIALIZED) {
       idur -> _tmp_prep = realloc(idur -> _tmp_prep, lrh_precompute_duration * sizeof(FP_TYPE));
       for(int j = 0; j < lrh_precompute_duration; j ++)
-        idur -> _tmp_prep[j] = lrh_duration_logp(idur, j);
+        idur -> _tmp_prep[j] = lrh_duration_logp(idur, j) * lrh_daem_temperature;
     }
   }
 }
