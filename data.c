@@ -134,6 +134,8 @@ void lrh_delete_seg(lrh_seg* dst) {
   }
   free(dst -> djump_out);
   free(dst -> pjump_out);
+  free(dst -> djump_in);
+  free(dst -> pjump_in);
   free(dst);
 }
 

@@ -146,7 +146,7 @@
   if(forward != NULL)
     memcpy(forward, a_begin, nseg * nt * sizeof(FP_TYPE));
   free(s_begin); free(s_end);
-  free(a_begin);
+  free(a_begin); free(a_end);
   free(s_reseg); free(t_reseg);
   return reseg;
 # undef sb
