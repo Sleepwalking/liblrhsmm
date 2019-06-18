@@ -202,6 +202,7 @@ void lrh_gmm_mixinc(lrh_gmm* dst, int nmix, FP_TYPE d) {
   dst -> var  = realloc(dst -> var , sizeof(FP_TYPE) * nmix * dst -> ndim);
   dst -> vfloor = realloc(dst -> vfloor, sizeof(FP_TYPE) * nmix * dst -> ndim);
   dst -> weight = realloc(dst -> weight, sizeof(FP_TYPE) * nmix);
+  dst -> _tmp_term = realloc(dst -> _tmp_term, sizeof(FP_TYPE) * nmix);
   while(dst -> nmix != nmix)
     lrh_gmm_mixuniinc(dst, d);
 /*
