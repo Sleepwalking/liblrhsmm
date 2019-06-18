@@ -143,7 +143,7 @@ FP_TYPE lrh_duration_logp(lrh_duration* src, FP_TYPE duration) {
   if(src -> _tmp_term == LRH_UNINITIALIZED)
     src -> _tmp_term = -log(src -> var * 2.0 * M_PI) * 0.5;
   if(src -> floor > 0 && duration < src -> floor) return NEGINF;
-  FP_TYPE p = src -> _tmp_term - 
+  FP_TYPE p = src -> _tmp_term -
     (duration - src -> mean) * (duration - src -> mean) / src -> var / 2.0;
   return p * lrh_inference_duration_weight;
 }
@@ -218,20 +218,24 @@ void lrh_gmm_mixinc(lrh_gmm* dst, int nmix, FP_TYPE d) {
 */
 }
 
+void lrh_gmm_precompute(lrh_gmm* dst) {
+  if(dst -> _tmp_term[0] == LRH_UNINITIALIZED) {
+    for(int k = 0; k < dst -> nmix; k ++) {
+      FP_TYPE mul = 0;
+      for(int j = 0; j < dst -> ndim; j ++)
+        mul -= log(lrh_gmmv(dst, k, j) * 2.0 * M_PI);
+      dst -> _tmp_term[k] = mul;
+    }
+  }
+}
+
 void lrh_model_precompute(lrh_model* dst) {
 # pragma omp critical
   for(int l = 0; l < dst -> nstream; l ++) {
     for(int i = 0; i < dst -> streams[l] -> ngmm; i ++) {
       lrh_gmm* igmm = dst -> streams[l] -> gmms[i];
       if(igmm -> nmix == 0) continue;
-      if(igmm -> _tmp_term[0] == LRH_UNINITIALIZED) {
-        for(int k = 0; k < igmm -> nmix; k ++) {
-          FP_TYPE mul = 0;
-          for(int j = 0; j < igmm -> ndim; j ++)
-            mul -= log(lrh_gmmv(igmm, k, j) * 2.0 * M_PI);
-          igmm -> _tmp_term[k] = mul;
-        }
-      }
+      lrh_gmm_precompute(igmm);
     }
   }
 # pragma omp critical

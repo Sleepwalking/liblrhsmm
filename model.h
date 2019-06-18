@@ -106,6 +106,7 @@ lrh_gmm* lrh_combine_gmm(lrh_gmm** src, int nsrc);
 // increase the number of mixture components by iteratively splitting the largest component
 void lrh_gmm_mixinc(lrh_gmm* dst, int nmix, FP_TYPE d);
 // calculate constant values before doing inference
+void lrh_gmm_precompute(lrh_gmm* dst);
 void lrh_model_precompute(lrh_model* dst);
 
 lrh_gmm_stat* lrh_gmm_stat_from_gmm(lrh_gmm* src);
@@ -124,4 +125,3 @@ void lrh_stream_stat_clear(lrh_stream_stat* dst);
 void lrh_model_stat_clear(lrh_model_stat* dst);
 
 #endif
-
