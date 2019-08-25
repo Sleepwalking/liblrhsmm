@@ -1,28 +1,42 @@
-#CROSS=i686-w64-mingw32-
-CC = $(CROSS)gcc
-LINK = $(CROSS)gcc
-AR = $(CROSS)ar
-WITH_SERIALIZATION = true
-#CFLAGS = -O1 -g -std=c99 -Wall -fPIC -lm
-CFLAGS = -DFP_TYPE=float -Ofast -g -std=c99 -Wall -fPIC -lm $(CFLAGSEXT)
-ARFLAGS = -rv
+PREFIX = /usr
+CC = gcc
+LINK = gcc
+AR = ar
+
+LRHSMM_SERIALIZATION = true
+
 OUT_DIR = ./build
-OBJS = $(OUT_DIR)/common.o $(OUT_DIR)/math-funcs.o $(OUT_DIR)/mempool.o $(OUT_DIR)/model.o \
-  $(OUT_DIR)/data.o $(OUT_DIR)/generate.o $(OUT_DIR)/inference.o \
+OBJS = $(OUT_DIR)/common.o \
+  $(OUT_DIR)/math-funcs.o \
+	$(OUT_DIR)/mempool.o \
+	$(OUT_DIR)/model.o \
+  $(OUT_DIR)/data.o \
+	$(OUT_DIR)/generate.o \
+	$(OUT_DIR)/inference.o \
   $(OUT_DIR)/estimate.o
-ifeq ($(WITH_SERIALIZATION), true)
+ifeq ($(LRHSMM_SERIALIZATION), true)
   OBJS += $(OUT_DIR)/cmp.o $(OUT_DIR)/serial.o
 endif
-LIBS = -lm
+
+ARFLAGS = -rv
+CFLAGS_COMMON = -DFP_TYPE=float -std=c99 -Wall -fPIC
+CFLAGS_DBG = $(CFLAGS_COMMON) -Og -g
+CFLAGS_REL = $(CFLAGS_COMMON) -Ofast
+CFLAGS = $(CFLAGS_DBG)
 
 default: $(OUT_DIR)/liblrhsmm.a
 
-test: test/test-random-model
+test: test/test-mempool test/test-random-model test/test-state-jumps 
+	test/test-mempool
+	test/test-random-model
+	test/test-state-jumps
+
+test-mempool: test/test-mempool
+	test/test-mempool
+test-random-model: test/test-random-model
 	test/test-random-model
 test-jumps: test/test-state-jumps
 	test/test-state-jumps
-test-mempool: test/test-mempool
-	test/test-mempool
 
 $(OUT_DIR)/liblrhsmm.a: $(OBJS)
 	$(AR) $(ARFLAGS) $(OUT_DIR)/liblrhsmm.a $(OBJS)
@@ -30,16 +44,15 @@ $(OUT_DIR)/liblrhsmm.a: $(OBJS)
 
 test/test-random-model: test/test-random-model.c test/test-common.h $(OUT_DIR)/liblrhsmm.a
 	$(LINK) test/test-random-model.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) -Wno-unused-function \
-	  -o test/test-random-model
+	  -lm -o test/test-random-model
 
 test/test-state-jumps: test/test-state-jumps.c test/test-common.h $(OUT_DIR)/liblrhsmm.a
 	$(LINK) test/test-state-jumps.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) -Wno-unused-function \
-	  -o test/test-state-jumps
+	  -lm -o test/test-state-jumps
 
 test/test-mempool: test/test-mempool.c $(OUT_DIR)/liblrhsmm.a
 	$(LINK) test/test-mempool.c $(OUT_DIR)/liblrhsmm.a $(CFLAGS) -Wno-unused-function \
-	  -o test/test-mempool
-	test/test-mempool
+	  -lm -o test/test-mempool
 
 $(OUT_DIR)/common.o: common.c common.h
 $(OUT_DIR)/mempool.o: mempool.c mempool.h
@@ -52,10 +65,18 @@ $(OUT_DIR)/inference.o: inference.c inference.h inference-helper.h inference-for
 $(OUT_DIR)/estimate.o: estimate.c estimate.h inference-helper.h model.h data.h common.h
 $(OUT_DIR)/serial.o: serial.c serial.h data.h model.h common.h
 $(OUT_DIR)/cmp.o:
+	mkdir -p build
 	$(CC) $(CFLAGS) -o $(OUT_DIR)/cmp.o -c external/cmp/cmp.c
 
 $(OUT_DIR)/%.o : %.c
+	mkdir -p build
 	$(CC) $(CFLAGS) -o $(OUT_DIR)/$*.o -c $*.c
+
+install: $(OUT_DIR)/liblrhsmm.a 
+	mkdir -p $(PREFIX)/lib $(PREFIX)/include/liblrhsmm
+	cp $(OUT_DIR)/liblrhsmm.a $(PREFIX)/lib
+	cp model.h mempool.h inference.h data.h generate.h common.h \
+	  $(PREFIX)/include/liblrhsmm
 
 clean:
 	@echo 'Removing all temporary binaries...'
