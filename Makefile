@@ -3,6 +3,8 @@ CC = gcc
 LINK = gcc
 AR = ar
 
+FP_TYPE = float
+
 LRHSMM_SERIALIZATION = true
 
 OUT_DIR = ./build
@@ -19,7 +21,7 @@ ifeq ($(LRHSMM_SERIALIZATION), true)
 endif
 
 ARFLAGS = -rv
-CFLAGS_COMMON = -DFP_TYPE=float -std=c99 -Wall -fPIC
+CFLAGS_COMMON = -DFP_TYPE=$(FP_TYPE) -std=c99 -Wall -fPIC
 CFLAGS_DBG = $(CFLAGS_COMMON) -Og -g
 CFLAGS_REL = $(CFLAGS_COMMON) -Ofast
 CFLAGS = $(CFLAGS_DBG)
