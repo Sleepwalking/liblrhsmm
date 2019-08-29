@@ -77,7 +77,7 @@ $(OUT_DIR)/%.o : %.c
 install: $(OUT_DIR)/liblrhsmm.a 
 	mkdir -p $(PREFIX)/lib $(PREFIX)/include/liblrhsmm
 	cp $(OUT_DIR)/liblrhsmm.a $(PREFIX)/lib
-	cp model.h mempool.h inference.h data.h generate.h common.h \
+	cp model.h mempool.h inference.h estimate.h data.h generate.h common.h \
 	  $(PREFIX)/include/liblrhsmm
 
 clean:
