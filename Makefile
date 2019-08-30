@@ -4,6 +4,7 @@ LINK = gcc
 AR = ar
 
 FP_TYPE = float
+CONFIG  = Debug
 
 LRHSMM_SERIALIZATION = true
 
@@ -24,7 +25,11 @@ ARFLAGS = -rv
 CFLAGS_COMMON = -DFP_TYPE=$(FP_TYPE) -std=c99 -Wall -fPIC
 CFLAGS_DBG = $(CFLAGS_COMMON) -Og -g
 CFLAGS_REL = $(CFLAGS_COMMON) -Ofast
-CFLAGS = $(CFLAGS_DBG)
+ifeq ($(CONFIG), Debug)
+  CFLAGS = $(CFLAGS_DBG)
+else
+  CFLAGS = $(CFLAGS_REL)
+endif
 
 default: $(OUT_DIR)/liblrhsmm.a
 
